@@ -176,7 +176,7 @@ namespace TouchDetectionTest
 
             //    var dst = new Mat();
             //    Cv2.Undistort(chessboard[0], dst, cameraMatrix, distCoeffs);
-            //    using(new Window("補正画像", WindowMode.AutoSize, dst))
+            //    using (new Window("補正画像", WindowMode.AutoSize, dst))
             //    {
             //        while (true)
             //            if (Cv2.WaitKey() == 'q')
@@ -239,7 +239,7 @@ namespace TouchDetectionTest
             //}
             #endregion
 
-            //視差マップ
+            //視差マップ生成
             #region
             //var leftFrame = new Mat();
             //var rightFrame = new Mat();
@@ -269,8 +269,9 @@ namespace TouchDetectionTest
             //        Cv2.CvtColor(leftFrame, leftGray, ColorConversionCodes.BGR2GRAY);
             //        Cv2.CvtColor(rightFrame, rightGray, ColorConversionCodes.BGR2GRAY);
 
-            //        var stereo = StereoBM.Create();
+            //        var stereo = StereoSGBM.Create(0, 16*10, 11, mode:StereoSGBMMode.HH);
             //        stereo.Compute(leftGray, rightGray, disparity);
+            //        disparity.Normalize(alpha: 0, beta: 255, normType: NormTypes.MinMax, dtype: MatType.CV_8U);
 
             //        using (new Window("disparity map", WindowMode.AutoSize, disparity))
             //        {
@@ -280,6 +281,22 @@ namespace TouchDetectionTest
             //        }
             //    }
             //}
+            #endregion
+
+            //もっとも簡単なStereoMatchingのTutorial
+            #region
+            var imgL = new Mat(@"C:\Users\tyani\Downloads\scene1.row3.col1.png", ImreadModes.Grayscale);
+            var imgR = new Mat(@"C:\Users\tyani\Downloads\scene1.row3.col3.png", ImreadModes.Grayscale);
+            var disparity = new Mat();
+
+            var stereo = StereoBM.Create();
+            stereo.Compute(imgL, imgR, disparity);
+            
+
+            using(new Window(disparity))
+            {
+                Cv2.WaitKey(0);
+            }
             #endregion
         }
     }
