@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using OpenCvSharp;
 using OpenCvSharp.XFeatures2D;
+using OpenCvSharp.Aruco;
 
 namespace TouchDetectionTest
 {
@@ -285,18 +286,186 @@ namespace TouchDetectionTest
 
             //もっとも簡単なStereoMatchingのTutorial
             #region
-            var imgL = new Mat(@"C:\Users\tyani\Downloads\scene1.row3.col1.png", ImreadModes.Grayscale);
-            var imgR = new Mat(@"C:\Users\tyani\Downloads\scene1.row3.col3.png", ImreadModes.Grayscale);
-            var disparity = new Mat();
+            //var imgL = new Mat(@"C:\Users\tyani\Downloads\scene1.row3.col1.png", ImreadModes.Grayscale);
+            //var imgR = new Mat(@"C:\Users\tyani\Downloads\scene1.row3.col3.png", ImreadModes.Grayscale);
+            //var disparity = new Mat();
 
-            var stereo = StereoBM.Create();
-            stereo.Compute(imgL, imgR, disparity);
-            
+            //var stereo = StereoBM.Create();
+            //stereo.Compute(imgL, imgR, disparity);
 
-            using(new Window(disparity))
+
+            //using(new Window(disparity))
+            //{
+            //    Cv2.WaitKey(0);
+            //}
+            #endregion
+
+            //ARマーカー
+            #region
+
+            using (var video0 = new VideoCapture(0))
+            using (var video1 = new VideoCapture(1))
+            using (var window0 = new Window("capture0"))
+            using (var window1 = new Window("capture1"))
             {
-                Cv2.WaitKey(0);
+                var dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
+                var parameters = DetectorParameters.Create();
+
+                var frames = new List<Mat> { new Mat(), new Mat()};
+                var videos = new List<VideoCapture>();
+                var windows = new List<Window>();
+
+                Point2f[][] corners;
+                int[] ids;
+                int[] previousIds;
+                Point2f[][] rejectedImgPoints;
+
+                videos.Add(video0);
+                videos.Add(video1);
+                windows.Add(window0);
+                windows.Add(window1);
+
+                var wasFoundList = new List<bool> {false, false};
+                var isTouchedList = new List<bool> {false, false};
+                var wasTouched = false;
+
+                while (true)
+                {
+                    for(int i = 0; i < 2; i++)
+                    {
+                        videos[i].Read(frames[i]);
+
+                        CvAruco.DetectMarkers(frames[i], dictionary, out corners, out ids, parameters, out rejectedImgPoints);
+
+                        isTouchedList[i] = wasFoundList[i] && !(ids.Length > 0);
+
+                        if (ids.Length > 0)
+                        {
+                            wasFoundList[i] = true;
+                            CvAruco.DrawDetectedMarkers(frames[i], corners, ids);
+                        }
+                        else
+                        {
+                            wasFoundList[i] = false;
+                            isTouchedList[i] = true;
+                        }
+
+                        windows[i].ShowImage(frames[i]);
+                    }
+
+                    if (!isTouchedList.Contains(false))
+                    {
+                        if (!wasTouched)
+                        {
+                            Console.WriteLine("Hello world!");
+                            for (int i = 0; i < isTouchedList.Count; i++)
+                            {
+                                isTouchedList[i] = false;
+                            }
+                        }
+                        wasTouched = true;
+                    }
+                    else
+                    {
+                        wasTouched = false;
+                    }
+
+                    var key = Cv2.WaitKey(1);
+                    if (key == 'q')
+                    {
+                        break;
+                    }
+                }
             }
+            #endregion
+
+            #region
+            //var numCamera = 1;
+
+            //var dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict7X7_50);
+            //var parameters = DetectorParameters.Create();
+
+            //var videoCaps = new List<VideoCapture>(numCamera);
+            //var windows = new List<Window>(numCamera);
+
+            //var capFrames = new List<Mat>(numCamera);
+            ////var markerCornersList = new List<Point2f[][]>(numCamera);
+            ////var markerIdsList = new List<int[]>(numCamera);
+            ////var rejectedImgPointsList = new List<Point2f[][]>(numCamera);
+
+            //var isFoundList = new List<bool>(numCamera);
+            //var isTouchedList = new List<bool>(numCamera);
+
+            //try
+            //{
+            //    for (int i = 0; i < numCamera; i++)
+            //    {
+            //        videoCaps.Add(new VideoCapture(i));
+            //        windows.Add(new Window("VideoCapture" + i.ToString()));
+            //    }
+
+            //    while (true)
+            //    {
+            //        for (int i = 0; i < numCamera; i++)
+            //        {
+            //            var capFrame = new Mat();
+            //            Point2f[][] markerCorners;
+            //            int[] markerIds;
+            //            Point2f[][] rejectedImgPoints;
+
+            //            videoCaps[i].Read(capFrame);
+            //            CvAruco.DetectMarkers(capFrame, dictionary, out markerCorners, out markerIds, parameters, out rejectedImgPoints);
+
+            //            if (!isFoundList[i] && markerIds.Length > 0)
+            //            {
+            //                isFoundList[i] = true;
+            //            }
+
+            //            if (isFoundList[i] && !(markerIds[i] > 0))
+            //            {
+            //                isTouchedList[i] = true;
+            //            }
+
+            //            if (markerIds.Length > 0)
+            //            {
+            //                CvAruco.DrawDetectedMarkers(capFrame, markerCorners, markerIds);
+            //            }
+
+            //            windows[i].ShowImage(capFrame);
+            //        }
+
+            //        if (!isTouchedList.Contains(false))
+            //        {
+            //            Console.WriteLine("Hello world!");
+            //        }
+
+            //        var key = Cv2.WaitKey(1);
+            //        if (key == 'q')
+            //        {
+            //            break;
+            //        }
+            //    }
+            //}
+            //catch
+            //{
+            //    Console.WriteLine("例外：カメラが取得できませんでした。");
+            //}
+            //finally
+            //{
+            //    for (int i = 0; i < numCamera; i++)
+            //    {
+            //        if (videoCaps[i] != null)
+            //            videoCaps[i].Dispose();
+
+            //        if (windows[i] != null)
+            //        {
+            //            windows[i].Dispose();
+            //        }
+            //    }
+            //}
+
+            //test
+
             #endregion
         }
     }
